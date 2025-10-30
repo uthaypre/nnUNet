@@ -4,13 +4,13 @@ import numpy as np
 from skimage import measure
 import nibabel as nib
 
-ct_image = sitk.ReadImage("/mnt/d/projectsD/datasets/nnUNet/nnUNet_raw/Dataset023_AbdomenAtlas1.1Mini/imagesTs/BDMAP_00000005_0000.nii.gz")
-ct_mask = sitk.ReadImage("/mnt/d/projectsD/datasets/nnUNet/nnUNet_raw/Dataset023_AbdomenAtlas1.1Mini/labelsTs/BDMAP_00000005.nii.gz")
-ct_array = sitk.GetArrayFromImage(ct_image)  # shape: (slices, height, width)
-print("CT image shape:", ct_array.shape)
+# ct_image = sitk.ReadImage("/mnt/d/projectsD/datasets/nnUNet/nnUNet_raw/Dataset023_AbdomenAtlas1.1Mini/imagesTs/BDMAP_00000005_0000.nii.gz")
+# ct_mask = sitk.ReadImage("/mnt/d/projectsD/datasets/nnUNet/nnUNet_raw/Dataset023_AbdomenAtlas1.1Mini/labelsTs/BDMAP_00000005.nii.gz")
+# ct_array = sitk.GetArrayFromImage(ct_image)  # shape: (slices, height, width)
+# print("CT image shape:", ct_array.shape)
 
-mask_array = sitk.GetArrayFromImage(ct_mask)
-print("CT mask shape:", mask_array.shape)
+# mask_array = sitk.GetArrayFromImage(ct_mask)
+# print("CT mask shape:", mask_array.shape)
 
 # spacing = ct_image.GetSpacing()  # (x, y, z) -> for scaling
 # spacing = spacing[::-1]  # reverse to match numpy array order
@@ -34,9 +34,21 @@ print("CT mask shape:", mask_array.shape)
 
 
 
-mask = nib.load("/mnt/d/projectsD/datasets/nnUNet/nnUNet_raw/Dataset023_AbdomenAtlas1.1Mini/labelsTs/BDMAP_00000005.nii.gz")
-data = mask.get_fdata()
+# mask = nib.load("/mnt/d/projectsD/datasets/nnUNet/nnUNet_raw/Dataset023_AbdomenAtlas1.1Mini/labelsTs/BDMAP_00000005.nii.gz")
+# mask = nib.load("/mnt/d/projectsD/datasets/nnUNet/nnUNet_raw/Dataset335_Lap2Ct-ct/imagesTs/input_ct_001.nii.gz")
+mask = nib.load("/mnt/d/projectsD/datasets/LAP2CT/ct/input_ct_001.nii.gz")
+# ct = nib.load("/mnt/d/projectsD/datasets/nnUNet/nnUNet_raw/Dataset023_AbdomenAtlas1.1Mini/imagesTs/input_ct_001_0000.nii.gz").get_fdata()
+# pcd_ct = o3d.geometry.PointCloud()
+# print("ct shape:", ct.shape, type(ct))
+# threshold = 40  # Adjust based on your CT values
+# coords = np.where(ct > threshold)  # Returns (z, y, x) indices
 
+# # Convert indices to 3D coordinates
+# points = np.column_stack((coords[2], coords[1], coords[0]))
+# pcd_ct.points = o3d.utility.Vector3dVector(points)  # Reshape to (N, 3) for point cloud
+
+data = mask.get_fdata()
+# o3d.visualization.draw_geometries([pcd_ct])
 # # To show single organ
 # label_no = 20
 # mask = (data == label_no).astype(np.uint8) # to show only single organ
@@ -89,9 +101,16 @@ organ_colors = {
     25: [1.0, 1.0, 0.502],       # FFFF80 - light yellow
 }
 
-organ_collection = []
+organ_collection = {}
+organ_bool = []
 for label, organ in class_map.items():
     organ_mask = (data == label).astype(np.uint8)  # Create a mask for the specific organ
+        # Check if organ exists in the data
+    if np.sum(organ_mask) == 0:
+        print(f"Skipping {organ} (label {label}) - not present in this scan")
+        organ_bool.append(False)
+        organ_collection[label] = None
+        continue
     verts, faces, _, _ = measure.marching_cubes(organ_mask, level=0.5)  # Extract the mesh for the organ
 
     organ_mesh = o3d.geometry.TriangleMesh()
@@ -99,7 +118,19 @@ for label, organ in class_map.items():
     organ_mesh.triangles = o3d.utility.Vector3iVector(faces)
     organ_mesh.compute_vertex_normals()
     organ_mesh.paint_uniform_color(organ_colors[label])  # Assign a random color to each organ
-    organ_collection.append(organ_mesh)  # Store the organ name and mesh
+    organ_collection[label] = organ_mesh  # Store the organ mesh
+    organ_bool.append(True)
+    print(f"Organ: {organ}, label: {label}")
+print("Organ collection keys:", organ_collection)
+print("Organ bool:", organ_bool)
 # Visualize each organ mesh
-o3d.visualization.draw_geometries(organ_collection)
+o3d.visualization.draw_geometries([organ for label,organ in organ_collection.items() if organ is not None],)
 
+
+# # save liver point cloud
+# pcd = o3d.geometry.PointCloud()
+# pcd.points = o3d.utility.Vector3dVector((data == 5).astype(np.uint8))  # Example for liver
+# o3d.io.write_point_cloud("../../TestData/sync.ply", pcd)
+
+# save liver mesh
+# o3d.io.write_triangle_mesh("/mnt/d/projectsD/datasets/CTL-REG/input/01/model/test_liver.obj", organ_collection[5])  # Save the liver mesh as an example

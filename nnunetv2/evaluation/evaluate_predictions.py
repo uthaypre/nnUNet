@@ -152,7 +152,8 @@ def compute_metrics_on_folder(folder_ref: str, folder_pred: str, output_file: st
     for r in regions_or_labels:
         means[r] = {}
         for m in metric_list:
-            means[r][m] = np.nanmean([i['metrics'][r][m] for i in results])
+            print([i['metrics'][r][m] for i in results])
+            means[r][m] = np.mean([i['metrics'][r][m] for i in results])
 
     # foreground mean
     foreground_mean = {}

@@ -62,7 +62,9 @@ depth_3d = o3d.geometry.PointCloud.create_from_depth_image(
         cy=depth_image.shape[0] / 2.0))
 
 
-
+print(0.5 * depth_image.shape[1] / np.tan(0.5 * np.deg2rad(55.0)), 0.5 * depth_image.shape[0] / np.tan(0.5 * np.deg2rad(55.0)),
+      depth_image.shape[1] / 2.0, depth_image.shape[0] / 2.0)
+# print(depth_3d)
 # mesh = o3d.geometry.TetraMesh.create_from_point_cloud(depth_3d)
 # o3d.visualization.draw_geometries([depth_3d])
 
@@ -110,4 +112,7 @@ for organ in labels.keys():
     organ_pc_collection.append(single_seg_point_cloud)
 
 # Visualize the point clouds for each organ
-o3d.visualization.draw_geometries([organ_pc_collection[0]], mesh_show_back_face=True)
+o3d.visualization.draw_geometries([organ_pc_collection[3]], mesh_show_back_face=True)
+
+# save liver point cloud
+# o3d.io.write_point_cloud("/mnt/d/projectsD/datasets/CTL-REG/input/01/real/liverPcds/frame_001_json.ply", organ_pc_collection[3])

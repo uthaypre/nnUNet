@@ -30,20 +30,12 @@ from nnunetv2.utilities.utils import get_identifiers_from_splitted_dataset_folde
 
 color_cycle = (
     "000000",
-    "4363d8",
-    "f58231",
-    "3cb44b",
-    "e6194B",
-    "911eb4",
-    "ffe119",
-    "bfef45",
-    "42d4f4",
-    "f032e6",
-    "000075",
-    "9A6324",
-    "808000",
-    "800000",
-    "469990",
+    "F0A0FF", "0075DC", "993F00", "4C005C", "191919",
+    "005C31", "2BCE48", "FFCC99", "808080", "94FFB5",
+    "8F7C00", "9DCC00", "C20088", "003380", "FFA405",
+    "FFA8BB", "426600", "FF0010", "5EF1F2", "00998F",
+    "E0FF66", "740AFF", "990000", "FFFF80", "FFE100",
+    "FF5005",
 )
 
 

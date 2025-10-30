@@ -2,34 +2,53 @@ from batchgenerators.utilities.file_and_folder_operations import *
 import shutil
 from nnunetv2.dataset_conversion.generate_dataset_json import generate_dataset_json
 from nnunetv2.paths import nnUNet_raw
-
+import os
+import random
 
 if __name__ == '__main__':
     """
-    Download the dataset from huggingface:
-    https://huggingface.co/datasets/AbdomenAtlas/_AbdomenAtlas1.1Mini#3--download-the-dataset
-    
-    IMPORTANT
-    cases 5196-9262 currently do not have images, just the segmentation. This seems to be a mistake 
-    """
-    base = '/mnt/d/projectsD/datasets/AbdomenAtlas'
-    target_dataset_id = 23
-    target_dataset_name = f'Dataset{target_dataset_id:03.0f}_AbdomenAtlas1.1Mini'
+    Download the dataset from github:
+    https://github.com/JunMa11/AbdomenCT-1K
 
-    cases = subdirs(base, join=False, prefix='BDMAP')
+    """
+    base = '/mnt/d/projectsD/datasets/AbdomenCT-1K'
+
+    target_dataset_id = 334
+    target_dataset_name = f'Dataset{target_dataset_id:03.0f}_AbdomenCT-1K'
+
+    cases = subfiles(join(base, 'images'), join=False, prefix='Case')
+
+    random.seed(42)  
+    random.shuffle(cases)
+
+    train_ratio = 0.8
+    split_index = int(len(cases) * train_ratio)
+    train_cases = cases[:split_index]
 
     maybe_mkdir_p(join(nnUNet_raw, target_dataset_name))
     imagesTr = join(nnUNet_raw, target_dataset_name, 'imagesTr')
     labelsTr = join(nnUNet_raw, target_dataset_name, 'labelsTr')
     maybe_mkdir_p(imagesTr)
     maybe_mkdir_p(labelsTr)
+    imagesTs = join(nnUNet_raw, target_dataset_name, 'imagesTs')
+    labelsTs = join(nnUNet_raw, target_dataset_name, 'labelsTs')
+    maybe_mkdir_p(imagesTs)
+    maybe_mkdir_p(labelsTs)
 
     for case in cases:
-        if not isfile(join(base, case, 'ct.nii.gz')):
-            print(f'Skipping case {case} due to missing image')
+        image_old = join(base, 'images', case)
+        label_old = join(base, 'labels', case[:-12] + '.nii.gz')
+        print("check label: ",label_old)
+        print("check image: ",image_old)
+        if not isfile(label_old):
+            print(f'Skipping case {case} due to missing labels')
             continue
-        shutil.copy(join(base, case, 'ct.nii.gz'), join(imagesTr, case + '_0000.nii.gz'))
-        shutil.copy(join(base, case, 'combined_labels.nii.gz'), join(labelsTr, case + '.nii.gz'))
+        if case in train_cases:
+            shutil.copy(image_old, join(imagesTr, case))
+            shutil.copy(label_old, join(labelsTr, case[:-12] + '.nii.gz'))
+        else:
+            shutil.copy(image_old, join(imagesTs, case))
+            shutil.copy(label_old, join(labelsTs, case[:-12] + '.nii.gz'))
 
     class_map = {1: 'aorta', 2: 'gall_bladder', 3: 'kidney_left', 4: 'kidney_right', 5: 'liver',
                  6: 'pancreas', 7: 'postcava', 8: 'spleen', 9: 'stomach', 10: 'adrenal_gland_left',
